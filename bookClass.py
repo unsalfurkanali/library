@@ -1,18 +1,18 @@
 import sqlite3 as db
-databaseName = "library.db"
+databaseName = "libraryTry.db"
 class Book():
 	def __init__(self):
 		print("**********Book Creating**********\n")
 		self.bookName = input("Book Name : ")
-		self.authorid = self.__selection("authors")
+		self.authorid = self.__selector("authors")
 		self.numberOfPages = int(input("Number of Pages : "))
-		self.languageid = self.__selection("languages")
+		self.languageid = self.__selector(process = "languages")
 		self.edition = input("Edition : ")
 		self.dateOfIssue = input("Date of Issue : ")
-		self.publisherid = self.__selection("publishers")
+		self.publisherid = self.__selector(process = "publishers")
 		self.originalName = input("Original Name : ")
-		self.translatorid = self.__selection("translator")
-		self.categoryid = self.__selection("categories")
+		self.translatorid = self.__selector(process = "translators")
+		self.categoryid = self.__selector(process = "categories")
 		self.authorName = self.idtoInfo(self.authorid, "authors")
 		self.translator = self.idtoInfo(self.translatorid, "translators")
 		self.category = self.idtoInfo(self.categoryid, "categories")
@@ -42,52 +42,52 @@ class Book():
 	def __len__(self):
 		return self.numberOfPages
 
+	def __selector(self, process, sql = ""):
+		choise = "yes"
+		lister = list()
+		sql = "SELECT * FROM " + process
+		print("Select book's" + process.capitalize())
+		print("****Registered {}s****".format(process.capitalize()))
+		lister = self.__selection(process, sql)
+		choise = input("Is your choise on this list?(yes/no) : ")
+		choise = choise.lower()
+		print(lister)
+		while True:
+			if choise == "yes":
+				choise = int(input("Please enter the your choise id's: "))
+				if choise in lister:
+					return choise
+			else:
+				choise = self.__appendDecorator(process)
+				if not choise == -1:
+					return choise
+				elif choise == -1:
+					choise = "yes"
 
-	def __selectorDecorator(self, func):
-		def wrapper(process):
-			choise = "yes"
-			lister = list()
-			sql = "SELECT * FROM " + process
-			print("Select book's" + process.capitalize())
-			print("****Registered {}s****".format(process.capitalize()))
-			lister = func(process, sql)
-			choise = input("Is your choise on this list?(yes/no) : ")
-			choise = choise.lower()
-			print(lister)
-			while True:
-				if choise == "yes":
-					choise = int(input("Please enter the your choise number: "))
-					if choise in lister:
-						return choise
-				else:
-					choise = self.__databaseControl(process)
-					if not choise == -1:
-						return choise
-					elif choise == -1:
-						choise = "yes"
-		return wrapper
-
-	@__selectorDecorator
 	def __selection(self, process, sql = ""):
 		lister = list()
 		with db.connect(databaseName) as con:
 			cursor = con.cursor()
 			cursor.execute(sql)
-			print("id	" + process.capitalize())
-			print("---	-----------")
-			for i in cursor.fetchall():
-				print(f"{i[0]}  -    {i[1]}")
-				lister.append(i[0])
+			if process == "authors" or process == "translators":
+				print("id	Name                Surname")
+				print("---	-----------         ---------------")
+				for i in cursor.fetchall():
+					print(f"{i[0]}  -    {i[1]}      {i[2]}")
+					lister.append(i[0])
+			else:
+				print("id	" + process.capitalize())
+				print("---	-----------")
+				for i in cursor.fetchall():
+					print(f"{i[0]}  -    {i[1]}")
+					lister.append(i[0])
 			return lister
 
-	def __appendDecorator(self, func):
-		def wrapper(process):
-			print("Please enter the choise you want to append this list\n")
-			id = func(process)
-			return id
-		return wrapper
+	def __appendDecorator(self, process):
+		print("Please enter the choise you want to append this list\n")
+		id = self.__databaseControl(process)
+		return id
 
-	@__appendDecorator
 	def __databaseControl(self, process):
 		if process == "authors" or process == "translator":
 			name = input("Name : ")
@@ -125,3 +125,5 @@ class Book():
 		
 	
 		
+nb = Book()
+print(nb.information())
