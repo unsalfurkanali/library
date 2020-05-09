@@ -1,16 +1,21 @@
 import sqlite3 as db
 databaseName = "libraryTry.db"
+CRED = '\033[91m'
+CEND = '\033[0m'
+CGREN = '\033[92m'
+CBLUE = '\033[94m'
+
 class Book():
 	def __init__(self):
 		print("**********Book Creating**********\n")
-		self.bookName = input("Book Name : ")
+		self.bookName = input(CBLUE + "Book Name : " + CEND)
 		self.authorid = self.__selector("authors")
-		self.numberOfPages = int(input("Number of Pages : "))
+		self.numberOfPages = int(input(CBLUE + "Number of Pages : " + CEND))
 		self.languageid = self.__selector(process = "languages")
-		self.edition = input("Edition : ")
-		self.dateOfIssue = input("Date of Issue : ")
+		self.edition = input(CBLUE + "Edition : " + CEND)
+		self.dateOfIssue = input(CBLUE + "Date of Issue : " + CEND)
 		self.publisherid = self.__selector(process = "publishers")
-		self.originalName = input("Original Name : ")
+		self.originalName = input(CBLUE + "Original Name : " + CEND)
 		self.translatorid = self.__selector(process = "translators")
 		self.categoryid = self.__selector(process = "categories")
 		self.authorName = self.idtoInfo(self.authorid, "authors")
@@ -33,36 +38,40 @@ class Book():
 			cursor.execute(sql)
 			data = cursor.fetchone()
 			if not data:
-				print(f"Error! {id} number is not available in this {process} list")
+				print(CRED + f"Error! {id} number is not available in this {process} list"+ CEND)
 				return -1
 			else:
 				for i in range(1,len(data),1):
 					string += str(data[i]) + " "
-				return string	
+				return string
+	
 	def __len__(self):
 		return self.numberOfPages
 
 	def __selector(self, process, sql = ""):
-		choise = "yes"
-		lister = list()
-		sql = "SELECT * FROM " + process
-		print("Select book's" + process.capitalize())
-		print("****Registered {}s****".format(process.capitalize()))
-		lister = self.__selection(process, sql)
-		choise = input("Is your choise on this list?(yes/no) : ")
-		choise = choise.lower()
-		print(lister)
 		while True:
-			if choise == "yes":
-				choise = int(input("Please enter the your choise id's: "))
-				if choise in lister:
-					return choise
+			choice = "y"
+			lister = list()
+			sql = "SELECT * FROM " + process
+			print("\nSelect book's " + process.capitalize())
+			print("\n****Registered {}****".format(process.capitalize()))
+			lister = self.__selection(process, sql)
+			choice = input(CBLUE + "\nIs your choice on this list? (y/n): " + CEND)
+			choice = choice.lower()
+			if choice == "y":
+				choice = int(input(CBLUE + "\nPlease enter the your choice id's: " + CEND))
+				if choice in lister:
+					return choice
+				else:
+					print(CRED + "Incorrect choice. Please select the choice in this list or append the 	newchoice" + CEND)
+			elif choice == "n":
+				choice = self.__databaseControl(process)
+				if not choice == -1:
+					return choice
+				elif choice == -1:
+					choice = "y"
 			else:
-				choise = self.__appendDecorator(process)
-				if not choise == -1:
-					return choise
-				elif choise == -1:
-					choise = "yes"
+				print(CRED + "!Incorrect input. Please the question's answer enter as y or n" + CEND)
 
 	def __selection(self, process, sql = ""):
 		lister = list()
@@ -73,57 +82,49 @@ class Book():
 				print("id	Name                Surname")
 				print("---	-----------         ---------------")
 				for i in cursor.fetchall():
-					print(f"{i[0]}  -    {i[1]}      {i[2]}")
+					print(CGREN + f"{i[0]}  -    {i[1]}                {i[2]}" + CEND)
 					lister.append(i[0])
 			else:
 				print("id	" + process.capitalize())
 				print("---	-----------")
 				for i in cursor.fetchall():
-					print(f"{i[0]}  -    {i[1]}")
+					print(CGREN + f"{i[0]}  -    {i[1]}" + CEND)
 					lister.append(i[0])
 			return lister
 
-	def __appendDecorator(self, process):
-		print("Please enter the choise you want to append this list\n")
-		id = self.__databaseControl(process)
-		return id
 
 	def __databaseControl(self, process):
+		print("Please enter the choice you want to append this list\n")
 		if process == "authors" or process == "translator":
-			name = input("Name : ")
-			surname = input("Surname : ")
+			name = input(CBLUE + "Name : " + CEND)
+			surname = input(CBLUE + "Surname : " + CEND)
 			col = 3
 		else:
-			name = input(f"Name of {process}")
+			name = input(CBLUE + f"Name of {process} : " + CEND)
 			col = 2
 		if col == 3:
 			sql = f"SELECT * FROM {process} WHERE name = '{name}' and surname = '{surname}'"
 		elif col == 2:
-			name = input(f"Name of {process} : ")
 			sql = f"SELECT * FROM {process} WHERE name = '{name}'"
 		con = db.connect(databaseName)
 		cursor = con.cursor()
 		cursor.execute(sql)
 		data = cursor.fetchall()
-		con.close()
-		print(data)
 		if not data:
 			if col == 3:
-				sql = f"INSERT INTO {process} (name, surname) VALUES ({name}, {surname})"
+				sql = f"INSERT INTO {process} (name, surname) VALUES ('{name}', '{surname}')"
 			elif col == 2:
-				sql = f"INSERT INTO {process} (name) VALUES ({name})"
+				sql = f"INSERT INTO {process} (name) VALUES ('{name}')"
+			cursor.execute(sql)
+			id = cursor.lastrowid
 			con.commit()
-			return cursor.lastrowid
 		else:
 			print("This " + process + "is already on this list")
-			return False
+			id = -1
+		con.close()
+		return id
 
 	def information(self):
-		info = list()
-		info.extend([self.bookName, self.authorName, self.language, self.numberOfPages, self.edition, self.dateOfIssue, self.publisher, self.originalName, self.translator, self.category])
-		return tuple(info)
+		sql = f"('{self.bookName}', {self.authorid}, {self.languageid}, {self.numberOfPages}, {self.edition}, '{self.dateOfIssue}', {self.publisherid}, {self.translatorid}, {self.categoryid})"
+		return sql
 		
-	
-		
-nb = Book()
-print(nb.information())
