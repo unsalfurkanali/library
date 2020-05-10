@@ -8,6 +8,7 @@ CBLUE = '\033[94m'
 class Book():
 	def __init__(self, databaseName):
 		print("**********Book Creating**********\n")
+		self.databaseName = databaseName
 		self.bookName = input(CBLUE + "Book Name : " + CEND)
 		self.authorid = self.__selector("authors")
 		self.numberOfPages = int(input(CBLUE + "Number of Pages : " + CEND))
@@ -23,8 +24,6 @@ class Book():
 		self.category = self.__idtoInfo(self.categoryid, "categories")
 		self.publisher = self.__idtoInfo(self.publisherid, "publishers")
 		self.language = self.__idtoInfo(self.languageid, "languages")
-		self.databaseName = databaseName
-
 	def __str__(self):
 		if self.translator == None:
 			return f"{self.bookName}\n {self.authorName}\n {self.numberOfPages}\n {self.language}\n {self.edition}\n {self.publisher}\n {self.dateOfIssue}\n"
