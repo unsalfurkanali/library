@@ -1,12 +1,12 @@
 import sqlite3 as db
-databaseName = "libraryTry.db"
+databaseName = "libraryTry.db" ##Default Library Name
 CRED = '\033[91m'
 CEND = '\033[0m'
 CGREN = '\033[92m'
 CBLUE = '\033[94m'
 
 class Book():
-	def __init__(self):
+	def __init__(self, databaseName):
 		print("**********Book Creating**********\n")
 		self.bookName = input(CBLUE + "Book Name : " + CEND)
 		self.authorid = self.__selector("authors")
@@ -18,11 +18,12 @@ class Book():
 		self.originalName = input(CBLUE + "Original Name : " + CEND)
 		self.translatorid = self.__selector(process = "translators")
 		self.categoryid = self.__selector(process = "categories")
-		self.authorName = self.idtoInfo(self.authorid, "authors")
-		self.translator = self.idtoInfo(self.translatorid, "translators")
-		self.category = self.idtoInfo(self.categoryid, "categories")
-		self.publisher = self.idtoInfo(self.publisherid, "publishers")
-		self.language = self.idtoInfo(self.languageid, "languages")
+		self.authorName = self.__idtoInfo(self.authorid, "authors")
+		self.translator = self.__idtoInfo(self.translatorid, "translators")
+		self.category = self.__idtoInfo(self.categoryid, "categories")
+		self.publisher = self.__idtoInfo(self.publisherid, "publishers")
+		self.language = self.__idtoInfo(self.languageid, "languages")
+		self.databaseName = databaseName
 
 	def __str__(self):
 		if self.translator == None:
@@ -30,10 +31,10 @@ class Book():
 		else:
 			return f"{self.bookName}\n {self.authorName}\n {self.numberOfPages}\n {self.language}\n {self.edition}\n {self.publisher}\n {self.translator}\n {self.originalName}\n {self.dateOfIssue}\n"
 	
-	def idtoInfo(self, id, process):
+	def __idtoInfo(self, id, process):
 		sql = f"SELECT * FROM {process} WHERE id = {id}"
 		string = str()
-		with db.connect(databaseName) as con:
+		with db.connect(self.databaseName) as con:
 			cursor = con.cursor()
 			cursor.execute(sql)
 			data = cursor.fetchone()
@@ -75,7 +76,7 @@ class Book():
 
 	def __selection(self, process, sql = ""):
 		lister = list()
-		with db.connect(databaseName) as con:
+		with db.connect(self.databaseName) as con:
 			cursor = con.cursor()
 			cursor.execute(sql)
 			if process == "authors" or process == "translators":
@@ -106,7 +107,7 @@ class Book():
 			sql = f"SELECT * FROM {process} WHERE name = '{name}' and surname = '{surname}'"
 		elif col == 2:
 			sql = f"SELECT * FROM {process} WHERE name = '{name}'"
-		con = db.connect(databaseName)
+		con = db.connect(self.databaseName)
 		cursor = con.cursor()
 		cursor.execute(sql)
 		data = cursor.fetchall()
