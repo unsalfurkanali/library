@@ -27,3 +27,44 @@ class Library():
 			cursor.execute(sql)
 			for i in cursor.fetchall():
 				print(i)
+	
+	def createLibrary(self, libraryName):
+		try:
+			sql = ["""CREATE TABLE "authors" (
+				"id"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+				"name"	TEXT NOT NULL,
+				"surname"	TEXT NOT NULL);""", """CREATE TABLE "categories" (
+				"id"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+				"name"	TEXT NOT NULL);""", """CREATE TABLE "languages" (
+				"id"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+				"name"	TEXT NOT NULL);""", """CREATE TABLE "publishers" (
+				"id"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+				"name"	TEXT NOT NULL);""", """CREATE TABLE "translators" (
+				"id"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+				"name"	TEXT NOT NULL,
+				"surname"	TEXT NOT NULL);""", """PRAGMA FOREIGN_KEY = ON;""", """CREATE TABLE "lib" (
+				"id"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+				"bookname"	TEXT NOT NULL,
+				"authorsid"	INTEGER,
+				"languagesid"	INTEGER,
+				"numberOfPage"	INTEGER NOT NULL,
+				"edition"	INTEGER NOT NULL,
+				"dateOfIssue"	TEXT,
+				"publishersid"	INTEGER,
+				"translatorsid"	INTEGER,
+				"categoriesid"	INTEGER,
+				FOREIGN KEY("languagesid") REFERENCES "languages"("id") ON DELETE SET NULL ON UPDATE CASCADE,
+				FOREIGN KEY("publishersid") REFERENCES "publishers"("id") ON DELETE SET NULL ON UPDATE CASCADE,
+				FOREIGN KEY("authorsid") REFERENCES "authors"("id") ON DELETE SET NULL ON UPDATE CASCADE,
+				FOREIGN KEY("categoriesid") REFERENCES "categories"("id") ON DELETE SET NULL ON UPDATE CASCADE);"""]
+			if not libraryName.endswith(".db"):
+				libraryName = libraryName + ".db"
+			with db.connect(libraryName) as con:
+				cursor = con.cursor()
+				for i in sql:
+					cursor.execute(i)
+					con.commit()
+			return True
+		except AttributeError:
+			print(CRED + "Something wet wrong!" +CEND)
+			return False

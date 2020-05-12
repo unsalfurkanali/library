@@ -2,6 +2,11 @@ from library import *
 import getpass
 userdb = "users.db"
 
+def nameGenerator(y):
+	import random
+	import string
+	return ''.join(random.choice(string.ascii_letters) for x in range(y))
+
 class User():
 	def __init__(self):
 		self.usercode = self.__usercode()
@@ -40,7 +45,7 @@ class User():
 			if not data:
 				choice = input(CRED + f"The usercode ({usercode}) has not been created. Press enter y if you want to create an account : " + CEND)
 				if choice == "y":
-					return 1
+					return self.__createUserSignIn(usercode, password)
 				else:
 					return -1
 			else:
@@ -54,3 +59,20 @@ class User():
 			data = cursor.fetchone()
 			return str(data[2])
 
+	def __createUserSignIn(self, usercode, userpassword):
+		try:
+			sql = f"INSERT INTO users (usercode, password) VALUES ({usercode}, {userpassword})"
+			with db.connect(userdb) as con:
+				cursor = con.cursor()
+				cursor.execute(sql)
+				con.commit()
+				id = cursor.lastrowid
+			sql = f"INSERT INTO userdb (userid, databasename) VALUES ({id}, {nameGenerator(6)})"
+			with db.connect(usercode) as con:
+				cursor = con.cursor()
+				cursor.execute(sql)
+				con.commit()
+			return id
+		except AttributeError:
+			print(CRED + "Something wet wrong" + CEND)
+			return -1
