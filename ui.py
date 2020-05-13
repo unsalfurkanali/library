@@ -1,4 +1,6 @@
 from user import *
+from bookClass import *
+from library import *
 
 def greeting():
 	print(CGREN + "*****Welcome the Library Application*****\n\n" + CEND)
@@ -17,5 +19,5 @@ def greeting():
 				break
 			else:
 				del bookObj
-	
+
 greeting()

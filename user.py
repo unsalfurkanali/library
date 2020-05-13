@@ -1,6 +1,10 @@
-from library import *
 import getpass
 userdb = "users.db"
+CRED = '\033[91m'
+CEND = '\033[0m'
+CGREN = '\033[92m'
+CBLUE = '\033[94m'
+import sqlite3 as db
 
 def nameGenerator(y):
 	import random
@@ -42,17 +46,17 @@ class User():
 			cursor = con.cursor()
 			cursor.execute(sql)
 			data = cursor.fetchone() #(id, usercode, password)
-			if not data or not (usercode == data[1] and password == data[2]):
-				choice = input(CRED + f"The usercode ({usercode}) has not been created. Pressenter y if you want to create an account : " + CEND)
-				if choice == "y":
-					return self.__createUserSignIn(usercode, password)
-				else:
-					return -1
-			elif password == data[2]:
-				return data[0]
+		if not data or not (usercode == data[1] and password == data[2]):
+			choice = input(CRED + f"The usercode ({usercode}) has not been created. Pressenter y if you want to create an account : " + CEND)
+			if choice == "y":
+				return self.__createUserSignIn(usercode, password)
 			else:
-				print(CRED + "Wrong password" + CEND)
 				return -1
+		elif password == data[2]:
+			return data[0]
+		else:
+			print(CRED + "Wrong password" + CEND)
+			return -1
 
 	def __userdbname(self, id):
 		sql = f"SELECT * FROM userdb WHERE userid = {id}"
@@ -69,31 +73,59 @@ class User():
 				cursor = con.cursor()
 				cursor.execute(sql)
 				con.commit()
+				libraryName = nameGenerator(6)+ '.db'
 				id = cursor.lastrowid
-			sql = f"INSERT INTO userdb (userid, databasename) VALUES ({id},'{nameGenerator(6)+'.db'}')"
+			sql = f"INSERT INTO userdb (userid, databasename) VALUES ({id},'{libraryName}')"
 			with db.connect(userdb) as con:
 				cursor = con.cursor()
 				cursor.execute(sql)
 				con.commit()
-			return id
+			if self.createLibrary(libraryName):
+				return id
+			else:
+				print(CRED + "Something wet wrong" + CEND)
+				return -1
 		except TypeError:
 			print(CRED + "Something wet wrong" + CEND)
 			return -1
 
-def greeting():
-	print(CGREN + "*****Welcome the Library Application*****\n\n" + CEND)
-	userObj = User()
-	print(f"Hello {userObj.usercode} \n")
-	libObj = Library(userObj.databasename)
-	while True:
-		print(CGREN + "1 -List my Library\n2- Append a Book\n" + CEND)
-		choice = int(input(CBLUE + "Please enter your choice : " + CEND))
-		if choice == 1:
-			libObj.listBook()
-		elif choice == 2:
-			bookObj = Book(userObj.databasename)
-			if not libObj.appendBook(bookObj):
-				print(CRED + "Something wet wrong" + CEND)
-				break
-			else:
-				del bookObj
+	def createLibrary(self, libraryName):
+		try:
+			sql = ["""CREATE TABLE "authors" (
+				"id"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+				"name"	TEXT NOT NULL,
+				"surname"	TEXT NOT NULL);""", """CREATE TABLE "categories" (
+				"id"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+				"name"	TEXT NOT NULL);""", """CREATE TABLE "languages" (
+				"id"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+				"name"	TEXT NOT NULL);""", """CREATE TABLE "publishers" (
+				"id"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+				"name"	TEXT NOT NULL);""", """CREATE TABLE "translators" (
+				"id"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+				"name"	TEXT NOT NULL,
+				"surname"	TEXT NOT NULL);""", """PRAGMA FOREIGN_KEY = ON;""", """CREATE TABLE "lib" (
+				"id"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+				"bookname"	TEXT NOT NULL,
+				"authorsid"	INTEGER,
+				"languagesid"	INTEGER,
+				"numberOfPage"	INTEGER NOT NULL,
+				"edition"	INTEGER NOT NULL,
+				"dateOfIssue"	TEXT,
+				"publishersid"	INTEGER,
+				"translatorsid"	INTEGER,
+				"categoriesid"	INTEGER,
+				FOREIGN KEY("languagesid") REFERENCES "languages"("id") ON DELETE SET NULL ON UPDATE CASCADE,
+				FOREIGN KEY("publishersid") REFERENCES "publishers"("id") ON DELETE SET NULL ON UPDATE CASCADE,
+				FOREIGN KEY("authorsid") REFERENCES "authors"("id") ON DELETE SET NULL ON UPDATE CASCADE,
+				FOREIGN KEY("categoriesid") REFERENCES "categories"("id") ON DELETE SET NULL ON UPDATE CASCADE);"""]
+			if not libraryName.endswith(".db"):
+				libraryName = libraryName + ".db"
+			with db.connect(libraryName) as con:
+				cursor = con.cursor()
+				for i in sql:
+					cursor.execute(i)
+					con.commit()
+			return True
+		except AttributeError:
+			print(CRED + "Something wet wrong!" +CEND)
+			return False
