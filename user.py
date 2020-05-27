@@ -1,5 +1,5 @@
 import getpass
-userdb = "users.db"
+userdb = "database/sys/users.db"
 CRED = '\033[91m'
 CEND = '\033[0m'
 CGREN = '\033[92m'
@@ -13,49 +13,57 @@ def nameGenerator(y):
 
 class User():
 	def __init__(self):
-		self.usercode = self.__usercode()
-		self.__userpassword = self.__password()
-		self.__userid = self.__controller(self.usercode, self.__userpassword)
+		while True:
+			self.usercode = self.__usercode()
+			self.__userpassword = self.__password()
+			self.__userid = self.__controller(self.usercode, self.__userpassword)
+			if self.__userid == -1:
+				print(CRED + "Log in failed! Wrong password or usercode" + CEND)
+			else:
+				break
 		try:
 			self.databasename = self.__userdbname(self.__userid)
 		except TypeError:
 			print(CRED + "Log in failed!" + CEND)
 			self.databasename = "fail"
 	
-	def __usercode(self):
-		while True:
+	def __usercode(self):	#Getting the usercode from user
+		usercode = -1
+		while usercode == -1:
 			try:
 				usercode = input(CBLUE + "Please enter your usercode : " + CEND)
 				usercode = int(usercode)
 			except ValueError:
 				print(CRED + "Usercode must be an integer! Try again" + CEND)
-			return usercode
+				usercode = -1
+		return usercode
 	
-	def __password(self):
-		while True:
+	def __password(self):	#Getting the password from user
+		password = -1
+		while password == -1:
 			try:
 				password = getpass.getpass(CBLUE + "Your password : " + CEND)
 				password = int(password)
 			except ValueError:
 				print(CRED + "Password must be an integer! Try again" + CEND)
-			return password
+				password = -1
+		return password
 	
-	def __controller(self, usercode, password):
-		sql = f"SELECT * FROM users WHERE usercode = {usercode} OR password = {password}"
+	def __controller(self, usercode, password):	#Verifying the password and usercode. If the password and usercode is true, return the user's id
+		sql = f"SELECT * FROM users WHERE usercode = {usercode}"
 		with db.connect(userdb) as con:
 			cursor = con.cursor()
 			cursor.execute(sql)
 			data = cursor.fetchone() #(id, usercode, password)
-		if not data or not (usercode == data[1] and password == data[2]):
+		if not data:	#Creating a new user if the there isn't usercode in database
 			choice = input(CRED + f"The usercode ({usercode}) has not been created. Pressenter y if you want to create an account : " + CEND)
 			if choice == "y":
 				return self.__createUserSignIn(usercode, password)
 			else:
 				return -1
-		elif password == data[2]:
+		if data[2] == password:
 			return data[0]
 		else:
-			print(CRED + "Wrong password" + CEND)
 			return -1
 
 	def __userdbname(self, id):
@@ -66,9 +74,10 @@ class User():
 			data = cursor.fetchone()
 			return str(data[2])
 
-	def __createUserSignIn(self, usercode, userpassword):
+	def __createUserSignIn(self, usercode, userpassword):	#Creating a new user
+		userpassword = self.__passwordCheck(userpassword)
+		sql = f"INSERT INTO users (usercode, password) VALUES ({usercode}, {userpassword})"
 		try:
-			sql = f"INSERT INTO users (usercode, password) VALUES ({usercode}, {userpassword})"
 			with db.connect(userdb) as con:
 				cursor = con.cursor()
 				cursor.execute(sql)
@@ -80,18 +89,21 @@ class User():
 				cursor = con.cursor()
 				cursor.execute(sql)
 				con.commit()
-			if self.createLibrary(libraryName):
+			if self.__createLibrary(libraryName):
+				print(CGREN + "\nUser created...\n" + CEND)
 				return id
 			else:
-				print(CRED + "Something wet wrong" + CEND)
 				return -1
 		except TypeError:
 			print(CRED + "Something wet wrong" + CEND)
 			return -1
+		except db.OperationalError:
+			print(CRED + "Something wet wrong" + CEND)
+			return -1
 
-	def createLibrary(self, libraryName):
-		try:
-			sql = ["""CREATE TABLE "authors" (
+	def __createLibrary(self, libraryName):
+		libraryName = "database/userdb/" + libraryName
+		sql = ["""CREATE TABLE "authors" (
 				"id"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 				"name"	TEXT NOT NULL,
 				"surname"	TEXT NOT NULL);""", """CREATE TABLE "categories" (
@@ -118,8 +130,9 @@ class User():
 				FOREIGN KEY("publishersid") REFERENCES "publishers"("id") ON DELETE SET NULL ON UPDATE CASCADE,
 				FOREIGN KEY("authorsid") REFERENCES "authors"("id") ON DELETE SET NULL ON UPDATE CASCADE,
 				FOREIGN KEY("categoriesid") REFERENCES "categories"("id") ON DELETE SET NULL ON UPDATE CASCADE);"""]
-			if not libraryName.endswith(".db"):
+		if not libraryName.endswith(".db"):
 				libraryName = libraryName + ".db"
+		try:	
 			with db.connect(libraryName) as con:
 				cursor = con.cursor()
 				for i in sql:
@@ -129,3 +142,12 @@ class User():
 		except AttributeError:
 			print(CRED + "Something wet wrong!" +CEND)
 			return False
+	
+	def __passwordCheck(self, password):
+		while True:
+			repass = getpass.getpass(CBLUE + "Your password (again) : " + CEND)
+			if repass == password:
+				return password
+			else:
+				print(CRED + "Passwords not match. Try again!" + CRED)
+				password = getpass.getpass(CBLUE + "Your password : " + CEND)

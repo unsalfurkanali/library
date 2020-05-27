@@ -8,7 +8,7 @@ CBLUE = '\033[94m'
 class Book():
 	def __init__(self, databaseName):
 		print("**********Book Creating**********\n")
-		self.databaseName = databaseName
+		self.databaseName = "database/userdb/" + databaseName
 		self.bookName = input(CBLUE + "Book Name : " + CEND)
 		self.authorid = self.__selector("authors")
 		self.numberOfPages = int(input(CBLUE + "Number of Pages : " + CEND))
