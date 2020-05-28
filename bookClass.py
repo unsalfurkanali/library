@@ -5,11 +5,17 @@ CEND = '\033[0m'
 CGREN = '\033[92m'
 CBLUE = '\033[94m'
 
+def capitalize(x):
+	s = ""
+	for i in x.split():
+		s += str(i).capitalize() + " "
+	return s.strip()
+
 class Book():
 	def __init__(self, databaseName):
 		print("**********Book Creating**********\n")
 		self.databaseName = "database/userdb/" + databaseName
-		self.bookName = input(CBLUE + "Book Name : " + CEND)
+		self.bookName = capitalize(input(CBLUE + "Book Name : " + CEND).capitalize())
 		self.authorid = self.__selector("authors")
 		self.numberOfPages = int(input(CBLUE + "Number of Pages : " + CEND))
 		self.languageid = self.__selector(process = "languages")
@@ -59,12 +65,15 @@ class Book():
 			choice = input(CBLUE + "\nIs your choice on this list? (y/n): " + CEND)
 			choice = choice.lower()
 			if choice == "y":
-				choice = int(input(CBLUE + "\nPlease enter the your choice id's: " + CEND))
-				if choice in lister:
-					return choice
-				else:
-					print(CRED + "Incorrect choice. Please select the choice in this list or append the 	newchoice" + CEND)
-			elif choice == "n":
+				while True:
+					if choice == -1:
+						break
+					choice = int(input(CBLUE + "\nPlease enter the your choice id's: " + CEND))
+					if choice in lister:
+						return choice
+					else:
+						print(CRED + "Incorrect choice. Please select the choice in this list or append the newchoise for '-1' : " + CEND)
+			if choice == "n":
 				choice = self.__databaseControl(process)
 				if not choice == -1:
 					return choice
@@ -95,12 +104,12 @@ class Book():
 
 	def __databaseControl(self, process):
 		print("Please enter the choice you want to append this list\n")
-		if process == "authors" or process == "translator":
-			name = input(CBLUE + "Name : " + CEND)
-			surname = input(CBLUE + "Surname : " + CEND)
+		if process == "authors" or process == "translators":
+			name = input(CBLUE + "Name : " + CEND).capitalize().strip()
+			surname = input(CBLUE + "Surname : " + CEND).capitalize().strip()
 			col = 3
 		else:
-			name = input(CBLUE + f"Name of {process} : " + CEND)
+			name = input(CBLUE + f"Name of {process} : " + CEND).capitalize().strip()
 			col = 2
 		if col == 3:
 			sql = f"SELECT * FROM {process} WHERE name = '{name}' and surname = '{surname}'"
